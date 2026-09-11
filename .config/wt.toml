@@ -1,0 +1,23 @@
+# Worktrunk PROJECT config.
+#
+# DEPLOY: this file ships inside .claude/.config/. Move (or copy) the whole `.config/` folder up
+# to your PROJECT ROOT so it lives at  <project-root>/.config/wt.toml  and commit it in the
+# project's own git. Worktrunk reads .config/wt.toml at the repo root — not .claude/ — and
+# .claude/ is its own git repo, absent from a fresh worktree; a copy left only under .claude/
+# would dangle exactly when the hook is needed. See .claude/README.md.
+#
+# AIDEV-NOTE: tracked at worktrunk's default path so hooks resolve from the *invoking* worktree's
+# own working-tree copy — that is what makes `wt switch --create` seed a new worktree out of the
+# box, from any shell and any worktree. The hook scripts stay in .claude/worktrunk/ and are
+# reached by absolute path via {{ primary_worktree_path }}, which always points at the primary
+# worktree.
+
+# post-start: runs in the background just AFTER a new worktree is created. Seeds the worktree
+# via our own script, passing the primary worktree path as $1.
+[post-start]
+setup = "{{ primary_worktree_path }}/.claude/worktrunk/post-start.sh {{ primary_worktree_path }}"
+
+# pre-remove: blocking hook that unmounts any bind mounts (e.g. a results:ro share) BEFORE
+# `wt remove`, else removal fails on the busy mountpoint. Runs in the worktree being removed.
+[pre-remove]
+unmount = "{{ primary_worktree_path }}/.claude/worktrunk/pre-remove.sh"
