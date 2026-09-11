@@ -1,0 +1,34 @@
+# =============================================================================
+# Dockerfile.sysbox — rendered from .claude/templates/docker-sysbox/init.sh
+# [GENERIC] sections rarely change; [PROJECT] sections come from newproject.conf.
+# AIDEV-NOTE: do not edit rendered output; edit the .tmpl or newproject.conf instead.
+# =============================================================================
+FROM @@BASE_IMAGE@@
+
+# --- [PROJECT] system packages (language runtime, build tools) ---
+RUN apt-get update && apt-get install -y \
+    @@SYSTEM_PACKAGES@@ \
+    && rm -rf /var/lib/apt/lists/*
+
+# --- [GENERIC] Node.js + Claude Code + jq + git safe.directory ---
+COPY docker/setup_sysbox.sh /tmp/setup_sysbox.sh
+RUN APP_DIR=@@WORKDIR@@ bash /tmp/setup_sysbox.sh && rm /tmp/setup_sysbox.sh
+
+WORKDIR @@WORKDIR@@
+
+# --- [PROJECT] dependency install ---
+@@DEP_INSTALL@@
+
+# --- [PROJECT] copy application files ---
+@@PROJECT_COPY@@
+
+# --- [GENERIC] interactive shell: tmux + zsh (oh-my-zsh, powerlevel10k) ---
+COPY docker/ ./docker/
+RUN bash docker/setup_shell.sh root
+ENV LANG=en_US.UTF-8
+
+# --- [PROJECT] environment variables ---
+@@ENV_VARS@@
+
+# --- [GENERIC] systemd as PID 1 (required for inner Docker daemon) ---
+ENTRYPOINT ["/sbin/init"]

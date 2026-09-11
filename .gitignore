@@ -1,5 +1,8 @@
 # Project specific
 
+.claude
+dev.env
+
 # macOS
 .DS_Store
 

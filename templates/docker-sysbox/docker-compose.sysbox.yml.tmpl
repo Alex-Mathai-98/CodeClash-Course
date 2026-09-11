@@ -1,0 +1,19 @@
+services:
+  @@SERVICE_NAME@@:
+    build:
+      context: .
+      dockerfile: Dockerfile.sysbox
+    runtime: sysbox-runc                        # [GENERIC] required for inner Docker
+    volumes:
+      - sysbox-docker-store:/var/lib/docker     # [GENERIC] inner docker daemon store
+@@VOLUMES@@
+    env_file:
+      - @@ENV_FILE@@        # host file → injected as env vars; NOT mounted into the container
+    environment:
+@@COMPOSE_ENV@@
+    develop:
+      watch:
+@@WATCH@@
+
+volumes:
+  sysbox-docker-store:                          # [GENERIC]
