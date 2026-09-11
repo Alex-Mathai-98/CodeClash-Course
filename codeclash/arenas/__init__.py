@@ -21,6 +21,7 @@ from codeclash.arenas.paintvolley.paintvolley import PaintVolleyArena
 from codeclash.arenas.robocode.robocode import RoboCodeArena
 from codeclash.arenas.robotrumble.robotrumble import RobotRumbleArena
 from codeclash.arenas.scml.scml import SCMLOneShotArena
+from codeclash.arenas.tictactoe.tictactoe import TicTacToeArena
 
 ARENAS = [
     AntsArena,
@@ -45,6 +46,7 @@ ARENAS = [
     RoboCodeArena,
     RobotRumbleArena,
     SCMLOneShotArena,
+    TicTacToeArena,
 ]
 
 
