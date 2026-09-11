@@ -1,0 +1,35 @@
+services:
+  codeclash:
+    build:
+      context: .
+      dockerfile: Dockerfile.sysbox
+    runtime: sysbox-runc                        # [GENERIC] required for inner Docker
+    volumes:
+      - sysbox-docker-store:/var/lib/docker     # [GENERIC] inner docker daemon store
+      - ./configs:/app/configs
+    env_file:
+      - ./dev.env        # host file → injected as env vars; NOT mounted into the container
+    environment:
+      - PYTHONPATH=/app
+    develop:
+      watch:
+        - action: sync
+          path: ./codeclash
+          target: /app/codeclash
+        - action: sync
+          path: ./configs
+          target: /app/configs
+        - action: sync
+          path: ./scripts
+          target: /app/scripts
+        - action: sync
+          path: ./CLAUDE.md
+          target: /app/CLAUDE.md
+        - action: sync
+          path: ./.claude
+          target: /app/.claude
+        - action: rebuild
+          path: ./pyproject.toml
+
+volumes:
+  sysbox-docker-store:                          # [GENERIC]

@@ -1,0 +1,53 @@
+# =============================================================================
+# Dockerfile.sysbox — rendered from .claude/templates/docker-sysbox/init.sh
+# [GENERIC] sections rarely change; [PROJECT] sections come from newproject.conf.
+# AIDEV-NOTE: do not edit rendered output; edit the .tmpl or newproject.conf instead.
+# =============================================================================
+FROM nestybox/ubuntu-jammy-systemd-docker
+
+# --- [PROJECT] system packages (language runtime, build tools) ---
+RUN apt-get update && apt-get install -y \
+    python3.11 python3.11-venv python3.11-dev python3.11-distutils git curl build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# --- [GENERIC] Node.js + Claude Code + jq + git safe.directory ---
+COPY docker/setup_sysbox.sh /tmp/setup_sysbox.sh
+RUN APP_DIR=/app bash /tmp/setup_sysbox.sh && rm /tmp/setup_sysbox.sh
+
+WORKDIR /app
+
+# --- [PROJECT] dependency install ---
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 \
+ && update-alternatives --set python3 /usr/bin/python3.11 \
+ && ln -sf /usr/bin/python3.11 /usr/bin/python \
+ && curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
+COPY pyproject.toml uv.lock ./
+RUN python3.11 -m pip install --no-cache-dir -U pip setuptools wheel \
+ && python3.11 -m pip install --no-cache-dir -e ".[dev]"
+
+# --- [PROJECT] copy application files ---
+COPY codeclash/ ./codeclash/
+COPY configs/ ./configs/
+COPY scripts/ ./scripts/
+COPY tests/ ./tests/
+COPY CLAUDE.md ./
+COPY .claude/ ./.claude/
+COPY .config/ ./.config/
+COPY .env.example ./
+COPY .gitignore ./
+COPY .pre-commit-config.yaml ./
+COPY README.md ./
+COPY CONTRIBUTING.md ./
+COPY mkdocs.yml ./
+COPY .git ./.git
+
+# --- [GENERIC] interactive shell: tmux + zsh (oh-my-zsh, powerlevel10k) ---
+COPY docker/ ./docker/
+RUN bash docker/setup_shell.sh root
+ENV LANG=en_US.UTF-8
+
+# --- [PROJECT] environment variables ---
+ENV PYTHONPATH=/app
+
+# --- [GENERIC] systemd as PID 1 (required for inner Docker daemon) ---
+ENTRYPOINT ["/sbin/init"]
